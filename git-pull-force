@@ -13,6 +13,20 @@ usage() {
     echo "If no branch-name is provided, defaults to 'main'."
 }
 
+check_git_presence() {
+    if ! command -v git &>/dev/null; then
+        echo "Error: git is not installed or not in the PATH."
+        exit 1
+    fi
+}
+
+check_git_directory() {
+    if [ ! -d ".git" ]; then
+        echo "Error: No .git directory found. Are you in the right directory?"
+        exit 1
+    fi
+}
+
 BRANCH="main"
 BYPASS_PROMPT=0
 
@@ -33,6 +47,9 @@ while [[ "$#" -gt 0 ]]; do
     esac
     shift
 done
+
+check_git_presence
+check_git_directory
 
 if [ $BYPASS_PROMPT -eq 0 ]; then
     read -p "This will overwrite local files with $BRANCH from origin. Are you sure? (y/n) " -n 1 -r
