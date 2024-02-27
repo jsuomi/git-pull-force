@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# NOTE!
+# This is a destructive script. It will overwrite the local files with whatever is found on git origin.
+
+usage() {
+    echo "Overwrites local files with latest origin files"
+    echo
+    echo "Usage: $0 [-y|--yes] [-h|--help] [branch-name]"
+    echo "  -y, --yes    Bypass confirmation prompt."
+    echo "  -h, --help   Display this help message."
+    echo
+    echo "If no branch-name is provided, defaults to 'main'."
+}
+
+BRANCH="main"
+BYPASS_PROMPT=0
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -y|--yes) BYPASS_PROMPT=1 ;;
+        -h|--help) usage; exit 0 ;;
+        *)
+            if [ -z "$BRANCH_SET" ]; then
+                BRANCH="$1"
+                BRANCH_SET=1
+            else
+                echo "Error: Multiple branches specified."
+                usage
+                exit 1
+            fi
+            ;;
+    esac
+    shift
+done
+
+if [ $BYPASS_PROMPT -eq 0 ]; then
+    read -p "This will overwrite local files with $BRANCH from origin. Are you sure? (y/n) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Aborted."
+        exit 1
+    fi
+fi
+
+git fetch --all
+if [ $? -ne 0 ]; then
+    echo "Failed to fetch from remote."
+    exit 1
+fi
+
+git reset --hard origin/$BRANCH
+if [ $? -ne 0 ]; then
+    echo "Failed to reset to branch $BRANCH."
+    exit 1
+fi
